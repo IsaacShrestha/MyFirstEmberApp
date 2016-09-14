@@ -1,4 +1,4 @@
-//Step 15 committed...
+//Step 16 completed but tags are not getting displayed either with my API or the API provided
 
 import Ember from 'ember';
 
@@ -28,6 +28,7 @@ export default Ember.Controller.extend({
 	photos: PhotoCollection.create(),
 	searchField: '',
 	tagSearchField: '',
+	tagList: ['hi','ember','cheese'],
 	filteredPhotos: function(){
 		var filter = this.get('searchField');
 		var rx = new RegExp(filter, 'gi');
@@ -38,6 +39,23 @@ export default Ember.Controller.extend({
 		});
 	}.property('photos.@each', 'searchField'),
 
+	init: function(){
+		this._super.apply(this, arguments);
+		var apiKey = 'aff9a42d0f8aefc47aa09da1597b59a0';
+		var host = 'https://api.flickr.com/services/rest/';
+		var method = "flickr.tags.getHotList";
+		var requestURL = host + "?method="+method + "&api_key="+apiKey+"&format=json&nojsoncallback=1";//+"&api_sig="+apiSig;
+		var photos = this.get('photos');
+		var t = this;
+		Ember.$.getJSON(requestURL, function(data){
+			//callback for successfully completed requests
+			console.log(data);
+			data.hottags.tag.map(function(tag){
+				t.get('tagList').pushObject(tag._content);
+			});
+		});
+	},
+
 	actions: {
 		search: function(){
 			this.get('photos').content.clear();
@@ -45,12 +63,13 @@ export default Ember.Controller.extend({
 			this.send('getPhotos',this.get('tagSearchField'));
 		},
 
+
 		getPhotos: function(tag){
-			var apiKey = 'e0a100af1e50282bf685a422d5aa22c4';
+			var apiKey = 'aff9a42d0f8aefc47aa09da1597b59a0';
 			var host = 'https://api.flickr.com/services/rest/';
 			var method = "flickr.tags.getClusterPhotos";
-			var apiSig = 'd44f5ca2979b0d53c80515319126ce5d';
-			var requestURL = host + "?method="+method + "&api_key="+apiKey+"&tag="+tag+"&format=json&nojsoncallback=1"+"&api_sig="+apiSig;
+			//var apiSig = 'd44f5ca2979b0d53c80515319126ce5d';
+			var requestURL = host + "?method="+method + "&api_key="+apiKey+"&format=json&nojsoncallback=1";//+"&api_sig="+apiSig;
 			var photos = this.get('photos');
 			var t = this;
 			Ember.$.getJSON(requestURL, function(data){
@@ -71,6 +90,13 @@ export default Ember.Controller.extend({
 					photos.pushObject(newPhotoItem);
 				});
 			});
+		},
+
+		clicktag: function(tag){
+			this.set('tagSearchField', tag);
+			this.get('photos').content.clear();
+			this.store.unloadAll('photo');
+			this.send('getPhotos',tag);
 		},
 	}
 });
